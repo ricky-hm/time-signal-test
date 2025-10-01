@@ -18,7 +18,7 @@
 </head>
 <body>
   <div class="card">
-    <h1>Web 時報（デスクトップ向け）</h1>
+    <h1>Web 時報（GitHub Pages対応版）</h1>
     <p>毎分、指定した秒に電子音を鳴らします（モバイル自動再生非対応）。</p>
 
     <div id="clock">--:--:--.---</div>
@@ -58,19 +58,20 @@
     let serverTimeOffset = 0;
 
     function log(s){
-      const t = getAccurateTime().toLocaleTimeString('ja-JP', {hour12:false}) + '.' + String(getAccurateTime().getMilliseconds()).padStart(3,'0');
+      const now = getAccurateTime();
+      const t = now.toLocaleTimeString('ja-JP', {hour12:false}) + '.' + String(now.getMilliseconds()).padStart(3,'0');
       logEl.innerHTML = `<div>[${t}] ${s}</div>` + logEl.innerHTML;
     }
 
     async function syncTime(){
       try {
-        const res = await fetch('https://worldtimeapi.org/api/timezone/Asia/Tokyo');
+        const res = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=Asia/Tokyo');
         const data = await res.json();
-        const serverMillis = new Date(data.datetime).getTime();
+        const serverMillis = new Date(data.dateTime).getTime();
         serverTimeOffset = serverMillis - Date.now();
-        log('NTP相当の時間同期完了（日本標準時）');
+        log('時間同期完了（timeapi.io 使用）');
       } catch(e) {
-        log('時間同期に失敗しました');
+        log('時間同期に失敗しました。ブラウザ時計を使用');
         serverTimeOffset = 0;
       }
     }
@@ -203,4 +204,18 @@
     });
 
     try{
-      const saved = localStorage
+      const saved = localStorage.getItem('timeSignal.sec');
+      if (saved !== null) secInput.value = saved;
+      const savedCount = localStorage.getItem('timeSignal.countdown');
+      if (savedCount !== null) useCountdown.checked = savedCount === '1';
+    }catch(e){}
+
+    window.addEventListener('beforeunload', ()=>{
+      try{
+        localStorage.setItem('timeSignal.sec', secInput.value);
+        localStorage.setItem('timeSignal.countdown', useCountdown.checked ? '1':'0');
+      }catch(e){}
+    });
+  </script>
+</body>
+</html>
